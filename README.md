@@ -1,6 +1,6 @@
 # Note Taker
 
-![screenshot](note-taker-ss.png)
+![screenshot](./public/assets/images/note-taker-ss.png)
   
 #### Table of Contents
 1. [Description](#description)
