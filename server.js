@@ -1,6 +1,7 @@
 const express = require ("express");
 const path = require('path');
 const fs = require('fs');
+const database = require("./db/db")
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -16,24 +17,53 @@ app.get("/notes", (req, res) => {
     res.sendFile(path.join(__dirname, "./public/notes.html"))
 });
 
-app.get("/api/notes",(req, res) => {
-    var savedNotes = fs.readFileSync(path.join(__dirname, "./db/db.json"))
-    savedNotes = JSON.parse(savedNotes)
-    res.json(savedNotes)
-  });
+app.route("/api/notes")
+    .get(function (req, res) {
+        res.json(database);
+    })
+    .post(function (req, res) {
+        var jsonFilePath = path.join(__dirname, "./db/db.json");
+        var newNote = req.body;
+        var highestId = 99;
+        for (var i = 0; i < database.length; i++) {
+            var individualNote = database[i];
 
-app.post("/api/notes",(req, res) => {
-    var savedNotes = JSON.parse(fs.readFileSync("./db/db.json"));
-    var noteID = (savedNotes.length).toString();
-    var newNote = req.body;
-    newNote.id = noteID;
-    savedNotes.push(newNote);
-    fs.writeFileSync("./db/db.json", JSON.stringify(savedNotes));
-    res.json(savedNotes);
-  });
+            if (individualNote.id > highestId) {
+                highestId = individualNote.id;
+            }
+        }
+        newNote.id = highestId + 1;
+        database.push(newNote)
+        fs.writeFile(jsonFilePath, JSON.stringify(database), function (err) {
+
+            if (err) {
+                return console.log(err);
+            }
+            console.log("Your note was saved!");
+        });
+        res.json(newNote);
+    });
 
 
-
+    app.delete("/api/notes/:id", function (req, res) {
+        var jsonFilePath = path.join(__dirname, "/db/db.json");
+        for (var i = 0; i < database.length; i++) {
+    
+            if (database[i].id == req.params.id) {
+                database.splice(i, 1);
+                break;
+            }
+        }
+        fs.writeFileSync(jsonFilePath, JSON.stringify(database), function (err) {
+    
+            if (err) {
+                return console.log(err);
+            } else {
+                console.log("Your note was deleted!");
+            }
+        });
+        res.json(database);
+    });
 
 
   app.listen(PORT, () => {
